@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--Note: Both Fix and DisableHide should not be True, if they are, TexTools will choose Hide over Fix-->
+<TexTools_Import>
+  <Model name="c0101e9068_top">
+    <Mesh name="ALL">
+      <Fix>false</Fix>
+      <DisableHide>false</DisableHide>
+    </Mesh>
+    <Mesh name="0">
+      <Fix>false</Fix>
+      <DisableHide>false</DisableHide>
+    </Mesh>
+  </Model>
+</TexTools_Import>

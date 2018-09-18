@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>ffxiv threejsr</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Arial;
+				font-size: 16px;
+				background-color: #111;
+				background-image: url(bg.png);
+				background-size: cover;
+				background-position: center center;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			.section {
+				position: absolute;
+				background-color: #111;
+				border-radius: 5px;
+				padding: 20px;
+				top: 50px;
+				left: 50px;
+				z-index: 5;
+			}
+
+			.loading {
+				position: absolute;
+				top: 50px;
+				right: 50px;
+				z-index: 5;
+			}
+
+			.logo {
+				position: absolute;
+				bottom: 50px;
+				right: 50px;
+				z-index: 5;
+			}
+		</style>
+	</head>
+
+	<body>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/90/three.js"></script>
+		<script src="./OBJLoader.js"></script>
+
+		<div class="section">
+			Left Click + Drag = Rotate<br>
+			Right Click + Drag = Pan<br>
+			Wheel Mouse = Zoom
+			<br><br>
+			<script type="text/javascript">
+				$('#camera_position').on('mouseup', function(event) {
+					var value = $(this).val();
+					camera.position.z = value;
+					render();
+				});
+			</script>
+			<br><br>
+			<button id="lightanimation">Toggle Light Animation</button>
+			<script type="text/javascript">
+				$('#lightanimation').on('click', function() {
+					lightshow = !lightshow;
+				});
+			</script>
+			<br><br>
+			<button id="resetrotation">Reset Position + Rotation</button>
+			<br><br>
+			Files to load: <span class="filestoload"></span>
+			<div class="filename"></div>
+		</div>
+
+		<div class="loading">
+			<img src="loading.gif" height="82">
+		</div>
+
+		<div class="logo">
+			<img src="logo_light.svg" height="42">
+		</div>
+
+		<script>
+
+			var container;
+
+			var camera, scene, renderer;
+
+			var mouseX = 0, mouseY = 0;
+
+			var windowHalfX = window.innerWidth / 2;
+			var windowHalfY = window.innerHeight / 2;
+			var lightshow = true;
+
+
+			init();
+			animate();
+
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
+				camera.position.z = 15;
+
+				// scene
+
+				scene = new THREE.Scene();
+
+				var ambientLight = new THREE.AmbientLight( 0xcccccc, 0.5 );
+				scene.add( ambientLight );
+
+				var pointLight = new THREE.PointLight( 0xffffff, 1.5 );
+				pointLight.position.set( 0, 0, 20 );
+				camera.add( pointLight );
+
+				var flip = false,
+					x = 0;
+
+				setInterval(function() {
+
+					if (lightshow) {
+						pointLight.position.set( x, -x, 20 );
+
+						flip = (!flip && x >= 100) ? true : flip;
+						flip = (flip && x <= -100) ? false : flip;
+
+						x = flip ? x - .1 : x + .1;
+					}
+
+				}, 10);
+
+				scene.add( camera );
+
+				// texture
+
+				var manager = new THREE.LoadingManager();
+				manager.onProgress = function ( item, loaded, total ) {
+
+					$('.filename').text(item);
+					$('.filestoload').text(loaded + '/'+ total);
+
+					if (loaded == total) {
+						$('.loading').fadeOut(200);
+						$('.filename').text('');
+					}
+
+				};
+
+				var textureLoader = new THREE.TextureLoader( manager );
+
+				var loader = new THREE.OBJLoader( manager );
+
+				var models = [
+					{
+						model: './Mounts/Fenrir/3D/m0071b0001_0.obj',
+						map: './Mounts/Fenrir/3D/m0071b0001_0_Diffuse.bmp',
+						normalMap: './Mounts/Fenrir/3D/m0071b0001_0_Normal.bmp',
+						alphaMap: './Mounts/Fenrir/3D/m0071b0001_0_Alpha.bmp',
+						alphaTest: 0.8,
+						emissiveMap: './Mounts/Fenrir/3D/m0071b0001_0_Emissive.bmp',
+					},
+					{
+						model: './Mounts/Fenrir/3D/m0071b0001_1.obj',
+						map: './Mounts/Fenrir/3D/m0071b0001_1_Diffuse.bmp',
+						normalMap: './Mounts/Fenrir/3D/m0071b0001_1_Normal.bmp',
+						alphaMap: './Mounts/Fenrir/3D/m0071b0001_1_Alpha.bmp',
+						alphaTest: 0.8,
+						emissiveMap: './Mounts/Fenrir/3D/m0071b0001_1_Emissive.bmp',
+					}
+				];
+
+				for(var i in models) {
+					var obj = models[i];
+
+					loader.load( obj.model, function ( object ) {
+						object.traverse( function ( child ) {
+							if ( child instanceof THREE.Mesh ) {
+								child.material.side = THREE.DoubleSide;
+								child.material.map = textureLoader.load( obj.map);
+
+								if (obj.normalMap) {
+									child.material.normalMap = textureLoader.load( obj.normalMap );									
+								}
+
+								if (obj.alphaMap) {
+									child.material.alphaMap = textureLoader.load( obj.alphaMap );
+									child.material.alphaTest = obj.alphaTest;								
+								}
+
+								if (obj.emissiveMap) {
+									child.material.emissiveMap = textureLoader.load( obj.emissiveMap );									
+								}
+							}
+						} );
+
+						object.applyMatrix( new THREE.Matrix4().makeTranslation( 0, -2.5, 0 ) );
+
+						//object.position.y =- 1.8;
+						scene.add( object );
+
+						var moving = false,
+							posX = 0,
+							posY = 0;
+
+						window.addEventListener("mousedown", function(event) {
+						    moving = true;
+						    posX = event.pageX;
+						    posY = event.pageY;
+						}, false);
+						window.addEventListener("mouseup", function(event) {
+						    moving = false;
+						}, false);
+						window.addEventListener("mousemove", function(event) {
+							if (!moving) {
+								return;
+							}
+
+							var isRightClick = event.which === 3;
+							var xDiff = Math.abs(posX - event.pageX);
+							var yDiff = Math.abs(posY - event.pageY);
+
+							if (xDiff > yDiff) {
+								if (xDiff > 5) {
+									if (isRightClick) {
+										object.translateX(event.pageX > posX ? .01 : -.01);
+									} else {
+										object.rotateY(event.pageX > posX ? .02 : -.02);
+									}
+								}
+							} else {
+								if (yDiff > 5) {
+									if (isRightClick) {
+										object.translateY(event.pageY < posY ? .01 : -.01);
+									} else {
+										object.rotateX(event.pageY < posY ? -.02 : .02);
+									}
+								}						
+							}
+
+							posX = event.pageX
+							posY = event.pageY
+
+						}, false);
+
+						document.addEventListener('contextmenu', event => event.preventDefault());
+
+						$('#resetrotation').on('click', function() {
+							object.rotation.set(0,0,0);
+							object.position.set(0,0,0);
+						});
+
+					});
+				}
+
+				//
+
+				renderer = new THREE.WebGLRenderer( { alpha: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor( 0x000000, 0 );
+				container.appendChild( renderer.domElement );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				window.addEventListener('wheel', function(e) {
+					if (e.deltaY < 0) {
+						camera.position.z = camera.position.z - 0.1;
+					}
+
+					if (e.deltaY > 0) {
+						camera.position.z = camera.position.z + 0.1;
+					}
+
+					$('#camera_position').val(camera.position.z);
+				});
+				
+			}
+
+			function onWindowResize() {
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			function animate() {
+				requestAnimationFrame( animate );
+				render();
+			}
+
+			function render() {
+				//camera.lookAt( scene.position );
+				renderer.render( scene, camera );
+			}
+		</script>
+
+	</body>
+</html>
