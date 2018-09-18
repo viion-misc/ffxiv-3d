@@ -11,3 +11,9 @@ Extract some models, and then modify the code to the correct paths. Currently se
 Doubt there will be any production on this, so feel free to use as you want! No questions asked. All the logic is in `index.html` as I was lazy :D maybe one day I will clean this up.
 
 Clone it and run it on a web server of sorts, i just used https://www.npmjs.com/package/live-server
+
+## Live example:
+
+http://xivapi.com/_3d/index.html
+
+![Example](https://i.imgur.com/JFNreqG.jpg)
